@@ -11,23 +11,10 @@ namespace MoviesAPI.Entities
     public class Genre
     {
         public int Id { get; set; }
+        
         [Required]
-        //[FirstLetterUppercase]
+        [StringLength(50)]
+        [FirstLetterUppercase]
         public string Name { get; set; } = string.Empty;
-
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (!string.IsNullOrEmpty(Name))
-            {
-                var firstLetter = Name[0].ToString();
-
-                if (firstLetter != firstLetter.ToUpper())
-                {
-                    yield return new ValidationResult("First letter should be uppercase", new string[] { nameof(Name) });
-                }
-            }
-        }
-
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using MoviesAPI.Filters;
-using MoviesAPI.Services;
 
 namespace MoviesAPI
 {
@@ -24,9 +23,6 @@ namespace MoviesAPI
             services.AddResponseCaching();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
-            services.AddSingleton<IRepository, InMemoryRepository>();
-            services.AddTransient<MyActionFilter>();
-
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(c =>
@@ -46,7 +42,7 @@ namespace MoviesAPI
 
             app.UseRouting();
 
-            app.UseResponseCaching();
+            //app.UseResponseCaching();
 
             app.UseAuthentication();
 
