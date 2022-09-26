@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using MoviesAPI.Filters;
 
 namespace MoviesAPI
@@ -15,6 +16,11 @@ namespace MoviesAPI
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            });
+
             services.AddControllers(options =>
             {            
                 options.Filters.Add(typeof(MyExceptionFilter));
@@ -29,6 +35,16 @@ namespace MoviesAPI
             {
                 c.SwaggerDoc("v1", new() { Title="MoviesAPI", Version = "v1" });
             });
+
+            services.AddCors(options =>
+            {
+                var frontendURL = Configuration.GetValue<string>("frontend_url");
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins(frontendURL).AllowAnyHeader().AllowAnyMethod();
+                });
+            });
+
         }
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -41,6 +57,8 @@ namespace MoviesAPI
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors();
 
             //app.UseResponseCaching();
 
