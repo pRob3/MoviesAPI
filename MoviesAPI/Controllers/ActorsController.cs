@@ -14,11 +14,14 @@ namespace MoviesAPI.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly string containerName = "actors";
 
-        public ActorsController(ApplicationDbContext context, IMapper mapper)
+        public ActorsController(ApplicationDbContext context, IMapper mapper, IFileStorageService fileStorageService)
         {
             _context = context;
             _mapper = mapper;
+            _fileStorageService = fileStorageService;
         }
 
 
@@ -47,10 +50,16 @@ namespace MoviesAPI.Controllers
         public async Task<ActionResult> Post([FromForm] ActorCreateDTO actorCreationDTO)
         {
 
-            return NoContent();
+
             var actor = _mapper.Map<Actor>(actorCreationDTO);
+
+            if (actorCreationDTO.Picture != null)
+            {
+                actor.Picture = await _fileStorageService.SaveFile(containerName, actorCreationDTO.Picture);
+            }
             _context.Add(actor);
             await _context.SaveChangesAsync();
+            
             return NoContent();
         }
 
