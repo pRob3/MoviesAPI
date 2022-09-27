@@ -21,6 +21,9 @@ namespace MoviesAPI
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            // AutoMapper
+            services.AddAutoMapper(typeof(StartUp));
+
             services.AddControllers(options =>
             {            
                 options.Filters.Add(typeof(MyExceptionFilter));
@@ -60,7 +63,7 @@ namespace MoviesAPI
 
             app.UseCors();
 
-            //app.UseResponseCaching();
+            app.UseResponseCaching();
 
             app.UseAuthentication();
 
