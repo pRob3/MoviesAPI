@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using MoviesAPI.APIBehavior;
 using MoviesAPI.Filters;
 
 namespace MoviesAPI
@@ -27,7 +28,8 @@ namespace MoviesAPI
             services.AddControllers(options =>
             {            
                 options.Filters.Add(typeof(MyExceptionFilter));
-            });
+                options.Filters.Add(typeof(ParseBadRequest));
+            }).ConfigureApiBehaviorOptions(BadRequestsBehavior.Parse);
 
             services.AddResponseCaching();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
