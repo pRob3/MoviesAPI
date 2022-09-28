@@ -24,6 +24,33 @@ namespace MoviesAPI.Controllers
             _fileStorageService = fileStorageService;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<LandingPageDTO>> Get()
+        {
+            var top = 6;
+            var today = DateTime.Today;
+
+            var upcomingReleases = await _context.Movies
+                .Where(x => x.ReleaseDate > today)
+                .OrderBy(x => x.ReleaseDate)
+                .Take(top)
+                .ToListAsync();
+
+            var inTheaters = await _context.Movies
+                .Where(x => x.InTheaters)
+                .OrderBy(x => x.ReleaseDate)
+                .Take(top)
+                .ToListAsync();
+
+            var landingPageDTO = new LandingPageDTO();
+            landingPageDTO.UpComingReleases = _mapper.Map<List<MovieDTO>>(upcomingReleases);
+            landingPageDTO.InTheaters = _mapper.Map<List<MovieDTO>>(inTheaters);
+
+            return landingPageDTO;
+        }
+        
+
+
         [HttpGet("{id:int}")]
         public async Task<ActionResult<MovieDTO>> Get(int id)
         {
