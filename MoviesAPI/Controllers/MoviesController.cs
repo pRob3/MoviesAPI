@@ -44,7 +44,7 @@ namespace MoviesAPI.Controllers
                 .ToListAsync();
 
             var landingPageDTO = new LandingPageDTO();
-            landingPageDTO.UpComingReleases = _mapper.Map<List<MovieDTO>>(upcomingReleases);
+            landingPageDTO.UpcomingReleases = _mapper.Map<List<MovieDTO>>(upcomingReleases);
             landingPageDTO.InTheaters = _mapper.Map<List<MovieDTO>>(inTheaters);
 
             return landingPageDTO;
@@ -68,6 +68,40 @@ namespace MoviesAPI.Controllers
             return _mapper.Map<MovieDTO>(movie);
         }
 
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<MovieDTO>>> Filter([FromQuery] FilterMoviesDTO filterMoviesDTO)
+        {
+            var moviesQueryable = _context.Movies.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filterMoviesDTO.Title))
+            {
+                moviesQueryable = moviesQueryable.Where(x => x.Title.Contains(filterMoviesDTO.Title));
+            }
+
+            if (filterMoviesDTO.InTheaters)
+            {
+                moviesQueryable = moviesQueryable.Where(x => x.InTheaters);
+            }
+
+            if (filterMoviesDTO.UpcomingReleases)
+            {
+                moviesQueryable = moviesQueryable.Where(x => x.ReleaseDate > DateTime.Today);
+            }
+
+            if (filterMoviesDTO.GenreId != 0)
+            {
+                moviesQueryable = moviesQueryable.Where(x => x.MoviesGenres.Select(y => y.GenreId).Contains(filterMoviesDTO.GenreId));
+            }
+
+            await HttpContext.InsertParametersPaginationInHeader(moviesQueryable);
+
+            var movies = await moviesQueryable
+                .OrderBy(x => x.Title)
+                .Paginate(filterMoviesDTO.PaginationDTO).ToListAsync();
+
+            return _mapper.Map<List<MovieDTO>>(movies);
+        }
+
         [HttpGet("PostGet")]
         public async Task<ActionResult<MoviePostGetDTO>> PostGet()
         {
@@ -78,7 +112,6 @@ namespace MoviesAPI.Controllers
             var genresDTO = _mapper.Map<List<GenreDTO>>(genres);
 
             return new MoviePostGetDTO() { Genres = genresDTO, MovieTheaters = movieTheatersDTO };
-
         }
 
         [HttpPost]
