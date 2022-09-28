@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MoviesAPI.APIBehavior;
 using MoviesAPI.Filters;
 using MoviesAPI.Helpers;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using System.Text;
 
 namespace MoviesAPI
 {
@@ -51,14 +54,34 @@ namespace MoviesAPI
             }).ConfigureApiBehaviorOptions(BadRequestsBehavior.Parse);
 
             //services.AddResponseCaching();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+            
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new() { Title="MoviesAPI", Version = "v1" });
             });
+
+            // Identity
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            // Authentication
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options => {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Key"])),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
 
             services.AddCors(options =>
             {
