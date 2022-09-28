@@ -45,12 +45,12 @@ namespace MoviesAPI
             services.AddHttpContextAccessor();
 
             services.AddControllers(options =>
-            {            
+            {
                 options.Filters.Add(typeof(MyExceptionFilter));
                 options.Filters.Add(typeof(ParseBadRequest));
             }).ConfigureApiBehaviorOptions(BadRequestsBehavior.Parse);
 
-            services.AddResponseCaching();
+            //services.AddResponseCaching();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -87,7 +87,7 @@ namespace MoviesAPI
 
             app.UseCors();
 
-            app.UseResponseCaching();
+            //app.UseResponseCaching();
 
             app.UseAuthentication();
 

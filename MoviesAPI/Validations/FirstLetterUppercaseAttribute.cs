@@ -17,9 +17,10 @@ namespace MoviesAPI.Validations
             }
 
             var firstLetter = value.ToString()[0].ToString();
+
             if (firstLetter != firstLetter.ToUpper())
             {
-                return new ValidationResult("The first letter must be uppercase");
+                return new ValidationResult("First letter should be uppercase");
             }
 
             return ValidationResult.Success;
