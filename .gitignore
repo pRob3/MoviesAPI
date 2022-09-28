@@ -11,6 +11,7 @@
 *.sln.docstates
 
 **/wwwroot/actors
+**/wwwroot/movies
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

@@ -8,7 +8,7 @@ using MoviesAPI.Helpers;
 
 namespace MoviesAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/movietheaters")]
     [ApiController]
     public class MovieTheatersController : ControllerBase
     {
