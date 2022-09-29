@@ -8,6 +8,7 @@ using MoviesAPI.Filters;
 using MoviesAPI.Helpers;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace MoviesAPI
@@ -16,13 +17,14 @@ namespace MoviesAPI
     {
         public StartUp(IConfiguration configuration)
         {
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
-        {
+        {            
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
@@ -30,11 +32,13 @@ namespace MoviesAPI
                     sqlOptions => sqlOptions.UseNetTopologySuite());
             });
 
-            
+            // FileService
+            services.AddScoped<IFileStorageService, InAppStorageService>();
+
+            services.AddHttpContextAccessor();
 
             // AutoMapper
             services.AddAutoMapper(typeof(StartUp));
-
             services.AddSingleton(provider => new MapperConfiguration(config =>
             {
                 var geometryFactory = provider.GetRequiredService<GeometryFactory>();
@@ -43,10 +47,6 @@ namespace MoviesAPI
 
             services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
 
-            // FileService
-            services.AddScoped<IFileStorageService, InAppStorageService>();
-            services.AddHttpContextAccessor();
-
             services.AddControllers(options =>
             {
                 options.Filters.Add(typeof(MyExceptionFilter));
@@ -54,16 +54,11 @@ namespace MoviesAPI
             }).ConfigureApiBehaviorOptions(BadRequestsBehavior.Parse);
 
             //services.AddResponseCaching();
-            
+
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new() { Title="MoviesAPI", Version = "v1" });
-            });
-
             // Identity
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -78,18 +73,33 @@ namespace MoviesAPI
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Key"])),
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                           Encoding.UTF8.GetBytes(Configuration["keyjwt"])),
                         ClockSkew = TimeSpan.Zero
                     };
                 });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("IsAdmin", policy => policy.RequireClaim("role", "admin"));
+            });
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new() { Title = "MoviesAPI", Version = "v1" });
+            });
 
             services.AddCors(options =>
             {
                 var frontendURL = Configuration.GetValue<string>("frontend_url");
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.WithOrigins(frontendURL).AllowAnyHeader().AllowAnyMethod()
-                    .WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+                    builder.WithOrigins(frontendURL).AllowAnyMethod().AllowAnyHeader()
+                        .WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+
+                    ////for when you're running on localhost
+                    //builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                    //.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
                 });
             });
 
@@ -98,6 +108,7 @@ namespace MoviesAPI
         {
             if (env.IsDevelopment())
             {
+                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
@@ -108,9 +119,9 @@ namespace MoviesAPI
 
             app.UseRouting();
 
-            app.UseCors();
-
             //app.UseResponseCaching();
+
+            app.UseCors();
 
             app.UseAuthentication();
 
